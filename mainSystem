@@ -1,0 +1,141 @@
+import tkinter as tk
+
+class ContactList:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("Contacts")
+        self.master.geometry("640x280")        
+
+
+        #DISPLAY BOX
+        self.contacts_listbox = tk.Listbox(self.master)
+        self.contacts_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        #SCROLLBAR FOR DISPLAY BOX
+        self.scrollbar = tk.Scrollbar(self.master)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.contacts_listbox.config(yscrollcommand=self.scrollbar.set)
+        self.scrollbar.config(command=self.contacts_listbox.yview)
+
+        #BUTTONS FOR ACTIONS (ADD,EDIT,VIEW,DELETE)
+        self.add_button = tk.Button(self.master, text='Add', command=self.add_contact)
+        self.add_button.pack(side=tk.TOP, padx=10, pady=10)
+
+        self.edit_button = tk.Button(self.master, text='Edit', command=self.edit_contact)
+        self.edit_button.pack(side=tk.TOP, padx=10, pady=10)
+
+        self.view_button = tk.Button(self.master, text='View', command=self.view_contact)
+        self.view_button.pack(side=tk.TOP, padx=10, pady=10)
+
+        self.delete_button = tk.Button(self.master, text='Delete', command=self.delete_contact)
+        self.delete_button.pack(side=tk.TOP, padx=10, pady=10)
+
+        #DICTIONARY FOR CONTACTS
+        self.contacts = {}
+
+    def add_contact(self):
+        # NEW WINDOW TO ADD CONTACTS 
+        self.add_window = tk.Toplevel(self.master)
+        self.add_window.title('Add Contact')
+
+        self.name_label = tk.Label(self.add_window, text='Name')
+        self.name_label.grid(row=0, column=0, padx=10, pady=10)
+        self.name_entry = tk.Entry(self.add_window)
+        self.name_entry.grid(row=0, column=1, padx=10, pady=10)
+
+        self.phone_label = tk.Label(self.add_window, text='Phone')
+        self.phone_label.grid(row=1, column=0, padx=10, pady=10)
+        self.phone_entry = tk.Entry(self.add_window)
+        self.phone_entry.grid(row=1, column=1, padx=10, pady=10)
+
+        self.email_label = tk.Label(self.add_window, text='Email')
+        self.email_label.grid(row=2, column=0, padx=10, pady=10)
+        self.email_entry = tk.Entry(self.add_window)
+        self.email_entry.grid(row=2, column=1, padx=10, pady=10)
+
+        self.save_button = tk.Button(self.add_window, text='Save', command=self.save_contact)
+        self.save_button.grid(row=3, column=1, padx=10, pady=10)
+
+    def save_contact(self):
+        # SAVE INFORMATION FROM ENTRY BOX
+        name = self.name_entry.get()
+        phone = self.phone_entry.get()
+        email = self.email_entry.get()
+
+        # ADD INFORMATION TO DICTIONARY
+        self.contacts[name] = {'phone': phone, 'email': email}
+        self.contacts_listbox.insert(tk.END, name)
+        self.add_window.destroy() # REMOVE THE ADD WINDOW
+
+    def edit_contact(self):
+        index = self.contacts_listbox.curselection() #TAKES WHATEVER THE USER SELECTS IN THE DISPLAYBOX
+        if index:
+            name = self.contacts_listbox.get(index)
+
+            #MAKE NEW WINDOW TO EDIT THE CONTACT
+            self.edit_window = tk.Toplevel(self.master)
+            self.edit_window.title('Edit Contact')
+
+            self.name_label = tk.Label(self.edit_window, text='Name')
+            self.name_label.grid(row=0, column=0, padx=10, pady=10)
+            self.name_entry = tk.Entry(self.edit_window)
+            self.name_entry.grid(row=0, column=1, padx=10, pady=10)
+            self.name_entry.insert(0, name)
+
+            self.phone_label = tk.Label(self.edit_window, text='Phone')
+            self.phone_label.grid(row=1, column=0, padx=10, pady=10)
+            self.phone_entry = tk.Entry(self.edit_window)
+            self.phone_entry.grid(row=1, column=1, padx=10, pady=10)
+            self.phone_entry.insert(0, self.contacts[name]['phone'])
+
+            self.email_label = tk.Label(self.edit_window, text='Email')
+            self.email_label.grid(row=2, column=0, padx=10, pady=10)
+            self.email_entry = tk.Entry(self.edit_window)
+            self.email_entry.grid(row=2, column=1, padx=10, pady=10)
+            self.email_entry.insert(0, self.contacts[name]['email'])
+
+            # NEW SAVE BUTTON FOR EDITED CONTACTS
+            self.save_button = tk.Button(self.edit_window, text='Save', command=lambda: self.save_edited_contact(name))
+            self.save_button.grid(row=3, column=1, padx=10, pady=10)
+
+    def save_edited_contact(self, name):
+        # THIS FUNCTION SAVES AND UPDATES THE CONTACTS NEW INFORMATION
+        self.contacts[name]['phone'] = self.phone_entry.get()
+        self.contacts[name]['email'] = self.email_entry.get()
+
+        self.contacts_listbox.delete(tk.ACTIVE)
+        self.contacts_listbox.insert(tk.ACTIVE, self.name_entry.get())
+
+        self.edit_window.destroy()
+
+    def view_contact(self):
+        # GETS THE SELECTED CONTACT
+        index = self.contacts_listbox.curselection()
+        if index:
+         
+            name = self.contacts_listbox.get(index)
+
+            # MAKES NEW WINDOW TO VIEW THE CONTACT INFORMATION  -- ONLY DISPLAY INFORMATION AS LABEL, SINCE WE WON'T NEED TO CHANGE IT
+            self.view_window = tk.Toplevel(self.master)
+            self.view_window.title('View Contact')
+
+            self.name_label = tk.Label(self.view_window, text='Name: ' + name)
+            self.name_label.pack(padx=10, pady=10)
+
+            self.phone_label = tk.Label(self.view_window, text='Phone: ' + self.contacts[name]['phone'])
+            self.phone_label.pack(padx=10, pady=10)
+
+            self.email_label = tk.Label(self.view_window, text='Email: ' + self.contacts[name]['email'])
+            self.email_label.pack(padx=10, pady=10)
+
+    def delete_contact(self): #DELETE CONTACT INFORMATION AFTER USER SELECTS IT
+        index = self.contacts_listbox.curselection()
+
+        if index:
+            name = self.contacts_listbox.get(index)
+            del self.contacts[name]
+            self.contacts_listbox.delete(tk.ACTIVE)
+
+root = tk.Tk()
+app = ContactList(root)
+root.mainloop()
