@@ -1,25 +1,195 @@
 import tkinter as tk
-
-window = tk.Tk()
-window.title("Phone Book")
-window.geometry("300x200")
-
-
-nameText = tk.Label(window, text="Enter your name:")
-nameText.pack(pady=5)
-
-nameResponse = tk.Entry(window)
-nameResponse.pack(pady= 6)
-
-passwordText = tk.Label(window, text="Create a password:")
-passwordText.pack(pady=5)
-
-nameResponse = tk.Entry(window)
-nameResponse.pack(pady= 6)
-
-loginButton = tk.Button(window, text="Login")
-loginButton.pack (pady=5)
+from tkinter import messagebox, filedialog
+from PIL import ImageTk, Image
+from tkinter import * 
 
 
-window.mainloop()
 
+class ContactList(tk.Frame):
+    def __init__(self, master=None):
+        super().__init__(master)
+        self.master = master
+        self.master.title("Login")
+        self.master.geometry("640x280")
+        
+        self.master = tk.Frame(self.master, width=640, height=480)
+        self.master.pack()
+    
+        #LOG IN MENU 
+        self.nameText = tk.Label(self.master, text="Enter your name:")
+        self.nameText.pack(pady=5)
+
+        self.nameResponse = tk.Entry(self.master)
+        self.nameResponse.pack(pady= 6)
+
+        self.passwordText = tk.Label(self.master, text="Create a password:")
+        self.passwordText.pack(pady=5)
+
+        password = StringVar() #Password variable
+        self.passwordResponse = tk.Entry(self.master, textvariable=password, show = '*')
+        self.passwordResponse.pack(pady= 6)
+        
+        
+        #self.loginButton = tk.Button(self.login, text="Login",command=self.login_verify)
+        self.loginButton = tk.Button(self.master, text="Login",command=self.menu)
+        self.loginButton.pack (pady=5)         
+        
+    def menu(self):
+        self.menu = tk.Toplevel(self.master)
+        self.menu.title('Contacts')
+        self.menu.geometry("640x280")
+        
+        #DISPLAY BOX
+        self.contacts_listbox = tk.Listbox(self.menu)
+        self.contacts_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        #SCROLLBAR FOR DISPLAY BOX
+        self.scrollbar = tk.Scrollbar(self.menu)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.contacts_listbox.config(yscrollcommand=self.scrollbar.set)
+        self.scrollbar.config(command=self.contacts_listbox.yview)
+
+        #BUTTONS FOR ACTIONS (ADD,EDIT,VIEW,DELETE)
+        self.add_button = tk.Button(self.menu, text='Add', command=self.add_contact)
+        self.add_button.pack(side=tk.TOP, padx=10, pady=10)
+
+        self.edit_button = tk.Button(self.menu, text='Edit', command=self.edit_contact)
+        self.edit_button.pack(side=tk.TOP, padx=10, pady=10)
+
+        self.view_button = tk.Button(self.menu, text='View', command=self.view_contact)
+        self.view_button.pack(side=tk.TOP, padx=10, pady=10)
+
+        self.delete_button = tk.Button(self.menu, text='Delete', command=self.delete_contact)
+        self.delete_button.pack(side=tk.TOP, padx=10, pady=10)
+        
+        self.exit_button = tk.Button(self.menu, text='Exit', command=self.close_application)
+        self.exit_button.pack(side=tk.TOP, padx=10, pady=10)
+
+        #DICTIONARY FOR CONTACTS
+        self.contacts = {}
+        
+    def close_application(self):
+        confirm_close = messagebox.askyesnocancel("Confirm Close", "Are you sure you want to exit the application? You will be logged out")
+        if confirm_close:
+            self.menu.destroy()
+            
+
+    def show_menu (self):
+        self.master.pack()
+        self.login.pack_forget()
+  
+
+    def add_contact(self):
+        # NEW WINDOW TO ADD CONTACTS 
+        self.add_window = tk.Toplevel(self.master)
+        self.add_window.title('Add Contact')
+
+        self.name_label = tk.Label(self.add_window, text='Name')
+        self.name_label.grid(row=0, column=0, padx=10, pady=10)
+        self.name_entry = tk.Entry(self.add_window)
+        self.name_entry.grid(row=0, column=1, padx=10, pady=10)
+
+        self.phone_label = tk.Label(self.add_window, text='Phone')
+        self.phone_label.grid(row=1, column=0, padx=10, pady=10)
+        self.phone_entry = tk.Entry(self.add_window)
+        self.phone_entry.grid(row=1, column=1, padx=10, pady=10)
+
+        self.email_label = tk.Label(self.add_window, text='Email')
+        self.email_label.grid(row=2, column=0, padx=10, pady=10)
+        self.email_entry = tk.Entry(self.add_window)
+        self.email_entry.grid(row=2, column=1, padx=10, pady=10)
+
+        self.save_button = tk.Button(self.add_window, text='Save', command=self.save_contact)
+        self.save_button.grid(row=3, column=1, padx=10, pady=10)
+        
+        self.exit_button = tk.Button(self.add_window,text = 'Go Back', command=self.go_back)
+        self.exit_button.grid(row=3, column=0, padx=10,pady=10)
+        
+    def go_back(self):
+        confirm_back = messagebox.askyesnocancel("Confirm Clear", "Are you sure you want to go back? The profile you made will be deleted")
+        if confirm_back:
+            self.add_window.destroy()          
+
+    def save_contact(self):
+        # SAVE INFORMATION FROM ENTRY BOX
+        name = self.name_entry.get()
+        phone = self.phone_entry.get()
+        email = self.email_entry.get()
+
+        # ADD INFORMATION TO DICTIONARY
+        self.contacts[name] = {'phone': phone, 'email': email}
+        self.contacts_listbox.insert(tk.END, name)
+        self.add_window.destroy() # REMOVE THE ADD WINDOW
+
+    def edit_contact(self):
+        index = self.contacts_listbox.curselection() #TAKES WHATEVER THE USER SELECTS IN THE DISPLAYBOX
+        if index:
+            name = self.contacts_listbox.get(index)
+
+            #MAKE NEW WINDOW TO EDIT THE CONTACT
+            self.edit_window = tk.Toplevel(self.master)
+            self.edit_window.title('Edit Contact')
+
+            self.name_label = tk.Label(self.edit_window, text='Name')
+            self.name_label.grid(row=0, column=0, padx=10, pady=10)
+            self.name_entry = tk.Entry(self.edit_window)
+            self.name_entry.grid(row=0, column=1, padx=10, pady=10)
+            self.name_entry.insert(0, name)
+
+            self.phone_label = tk.Label(self.edit_window, text='Phone')
+            self.phone_label.grid(row=1, column=0, padx=10, pady=10)
+            self.phone_entry = tk.Entry(self.edit_window)
+            self.phone_entry.grid(row=1, column=1, padx=10, pady=10)
+            self.phone_entry.insert(0, self.contacts[name]['phone'])
+
+            self.email_label = tk.Label(self.edit_window, text='Email')
+            self.email_label.grid(row=2, column=0, padx=10, pady=10)
+            self.email_entry = tk.Entry(self.edit_window)
+            self.email_entry.grid(row=2, column=1, padx=10, pady=10)
+            self.email_entry.insert(0, self.contacts[name]['email'])
+
+            # NEW SAVE BUTTON FOR EDITED CONTACTS
+            self.save_button = tk.Button(self.edit_window, text='Save', command=lambda: self.save_edited_contact(name))
+            self.save_button.grid(row=3, column=1, padx=10, pady=10)
+
+    def save_edited_contact(self, name):
+        # THIS FUNCTION SAVES AND UPDATES THE CONTACTS NEW INFORMATION
+        self.contacts[name]['phone'] = self.phone_entry.get()
+        self.contacts[name]['email'] = self.email_entry.get()
+
+        self.contacts_listbox.delete(tk.ACTIVE)
+        self.contacts_listbox.insert(tk.ACTIVE, self.name_entry.get())
+
+        self.edit_window.destroy()
+
+    def view_contact(self):
+        # GETS THE SELECTED CONTACT
+        index = self.contacts_listbox.curselection()
+        if index:
+         
+            name = self.contacts_listbox.get(index)
+
+            # MAKES NEW WINDOW TO VIEW THE CONTACT INFORMATION  -- ONLY DISPLAY INFORMATION AS LABEL, SINCE WE WON'T NEED TO CHANGE IT
+            self.view_window = tk.Toplevel(self.master)
+            self.view_window.title('View Contact')
+
+            self.name_label = tk.Label(self.view_window, text='Name: ' + name)
+            self.name_label.pack(padx=10, pady=10)
+
+            self.phone_label = tk.Label(self.view_window, text='Phone: ' + self.contacts[name]['phone'])
+            self.phone_label.pack(padx=10, pady=10)
+
+            self.email_label = tk.Label(self.view_window, text='Email: ' + self.contacts[name]['email'])
+            self.email_label.pack(padx=10, pady=10)
+
+    def delete_contact(self): #DELETE CONTACT INFORMATION AFTER USER SELECTS IT
+        index = self.contacts_listbox.curselection()
+
+        if index:
+            name = self.contacts_listbox.get(index)
+            del self.contacts[name]
+            self.contacts_listbox.delete(tk.ACTIVE)
+
+root = tk.Tk()
+app = ContactList(root)
+root.mainloop()
