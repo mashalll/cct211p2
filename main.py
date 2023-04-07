@@ -55,6 +55,18 @@ class ContactList(tk.Frame):
     def edit_contact(self, name, phone, email):
         c.execute("UPDATE contacts SET name = ?, email = ?, phone = ? WHERE id = ?",(name, phone, email, user_id))
         conn.commit()
+        
+    # function to view all contacts
+    def view_contacts2():
+        c.execute("SELECT * FROM contacts")
+        contacts = c.fetchall()
+        for contact in contacts:
+            print(contact)
+
+    # function to delete a contact
+    def delete_contact2(id):
+        c.execute("DELETE FROM contacts WHERE id = ?", (id,))
+        conn.commit()
 
     def get_contacts_by_user_id(self, user_id):
         c = self.db_conn.cursor()
