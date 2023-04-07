@@ -3,7 +3,7 @@ from tkinter import messagebox, filedialog
 from PIL import ImageTk, Image
 from tkinter import * 
 import re
-
+import sqlite3
 
 class ContactList(tk.Frame):
     def __init__(self, master=None):
@@ -15,37 +15,70 @@ class ContactList(tk.Frame):
         self.master = tk.Frame(self.master, width=640, height=480)
         self.master.pack()
 
+        self.db_conn = sqlite3.connect('contacts.db')
+        self.create_table()
+
         self.users = {}
 
-        #LOG IN MENU
+        # LOG IN MENU
         self.nameText = tk.Label(self.master, text="Enter your username:")
         self.nameText.pack(pady=5)
 
         self.nameResponse = tk.Entry(self.master)
-        self.nameResponse.pack(pady= 6)
+        self.nameResponse.pack(pady=6)
 
         self.passwordText = tk.Label(self.master, text="Enter your password:")
         self.passwordText.pack(pady=5)
 
-        password = StringVar() #Password variable
-        self.passwordResponse = tk.Entry(self.master, textvariable=password, show = '*')
-        self.passwordResponse.pack(pady= 6)
+        password = StringVar()  # Password variable
+        self.passwordResponse = tk.Entry(self.master, textvariable=password, show='*')
+        self.passwordResponse.pack(pady=6)
 
-
-        #self.loginButton = tk.Button(self.login, text="Login",command=self.login_verify)
-        self.loginButton = tk.Button(self.master, text="Login",command=self.menu)
+        # self.loginButton = tk.Button(self.login, text="Login",command=self.login_verify)
+        self.loginButton = tk.Button(self.master, text="Login", command=self.menu)
         self.loginButton.pack(pady=5)
 
+    def create_table(self):
+        c = self.db_conn.cursor()
+        c.execute('''CREATE TABLE IF NOT EXISTS contacts
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, phone TEXT, email TEXT, user_id INTEGER,
+                      FOREIGN KEY(user_id) REFERENCES users(id))''')
+        c.execute('''CREATE TABLE IF NOT EXISTS users
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, password TEXT)''')
+        self.db_conn.commit()
+
+    def insert_contact(self, name, phone, email, user_id):
+        c = self.db_conn.cursor()
+        c.execute("INSERT INTO contacts (name, phone, email, user_id) VALUES (?, ?, ?, ?)", (name, phone, email, user_id))
+        self.db_conn.commit()
+
+    def get_contacts_by_user_id(self, user_id):
+        c = self.db_conn.cursor()
+        c.execute("SELECT * FROM contacts WHERE user_id=?", (user_id,))
+        return c.fetchall()
+
     def login(self):
-        if self.nameResponse.get() in self.users:
-            if self.passwordResponse.get() == self.users[self.nameResponse.get()][0]:
+        c = self.db_conn.cursor()
+        c.execute("SELECT * FROM users WHERE username=?", (self.nameResponse.get(),))
+        user = c.fetchone()
+        if user:
+            if self.passwordResponse.get() == user[2]:
                 print("Account found")
+                self.user_id = user[0]
+                self.load_contacts()
             else:
                 print("Does not match password")
                 return False
         else:
-            self.users[self.nameResponse.get()] = [self.passwordResponse.get()]
-            print(self.users)
+            c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (self.nameResponse.get(), self.passwordResponse.get()))
+            self.user_id = c.lastrowid
+            self.db_conn.commit()
+            print("Account created")
+
+    def load_contacts(self):
+        contacts = self.get_contacts_by_user_id(self.user_id)
+        for contact in contacts:
+            self.contacts_listbox.insert(tk.END, contact[1])
 
     def menu(self):
         self.menu = tk.Toplevel(self.master)
@@ -252,4 +285,3 @@ class ContactList(tk.Frame):
 root = tk.Tk()
 app = ContactList(root)
 root.mainloop()
-
