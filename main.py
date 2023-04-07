@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import messagebox, filedialog
 from PIL import ImageTk, Image
 from tkinter import * 
-
+import re
 
 
 class ContactList(tk.Frame):
@@ -11,34 +11,47 @@ class ContactList(tk.Frame):
         self.master = master
         self.master.title("Login")
         self.master.geometry("640x280")
-        
+
         self.master = tk.Frame(self.master, width=640, height=480)
         self.master.pack()
-    
-        #LOG IN MENU 
-        self.nameText = tk.Label(self.master, text="Enter your name:")
+
+        self.users = {}
+
+        #LOG IN MENU
+        self.nameText = tk.Label(self.master, text="Enter your username:")
         self.nameText.pack(pady=5)
 
         self.nameResponse = tk.Entry(self.master)
         self.nameResponse.pack(pady= 6)
 
-        self.passwordText = tk.Label(self.master, text="Create a password:")
+        self.passwordText = tk.Label(self.master, text="Enter your password:")
         self.passwordText.pack(pady=5)
 
         password = StringVar() #Password variable
         self.passwordResponse = tk.Entry(self.master, textvariable=password, show = '*')
         self.passwordResponse.pack(pady= 6)
-        
-        
+
+
         #self.loginButton = tk.Button(self.login, text="Login",command=self.login_verify)
         self.loginButton = tk.Button(self.master, text="Login",command=self.menu)
-        self.loginButton.pack (pady=5)         
-        
+        self.loginButton.pack(pady=5)
+
+    def login(self):
+        if self.nameResponse.get() in self.users:
+            if self.passwordResponse.get() == self.users[self.nameResponse.get()][0]:
+                print("Account found")
+            else:
+                print("Does not match password")
+                return False
+        else:
+            self.users[self.nameResponse.get()] = [self.passwordResponse.get()]
+            print(self.users)
+
     def menu(self):
         self.menu = tk.Toplevel(self.master)
         self.menu.title('Contacts')
         self.menu.geometry("640x280")
-        
+
         #DISPLAY BOX
         self.contacts_listbox = tk.Listbox(self.menu)
         self.contacts_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -61,26 +74,39 @@ class ContactList(tk.Frame):
 
         self.delete_button = tk.Button(self.menu, text='Delete', command=self.delete_contact)
         self.delete_button.pack(side=tk.TOP, padx=10, pady=10)
-        
+
         self.exit_button = tk.Button(self.menu, text='Exit', command=self.close_application)
         self.exit_button.pack(side=tk.TOP, padx=10, pady=10)
 
+        # CHECKING AND LOADING USER INFO
+        if self.nameResponse.get() in self.users:
+            if self.passwordResponse.get() == self.users[self.nameResponse.get()][0]:
+                for i in self.users[self.nameResponse.get()][1:]:
+                    self.contacts_listbox.insert(tk.END, i)
+                print("Account found")
+            else:
+                print("Does not match password")
+                return False
+        else:
+            self.users[self.nameResponse.get()] = [self.passwordResponse.get()]
+            print("Account created")
+
         #DICTIONARY FOR CONTACTS
         self.contacts = {}
-        
+
     def close_application(self):
         confirm_close = messagebox.askyesnocancel("Confirm Close", "Are you sure you want to exit the application? You will be logged out")
         if confirm_close:
             self.menu.destroy()
-            
+
 
     def show_menu (self):
         self.master.pack()
         self.login.pack_forget()
-  
+
 
     def add_contact(self):
-        # NEW WINDOW TO ADD CONTACTS 
+        # NEW WINDOW TO ADD CONTACTS
         self.add_window = tk.Toplevel(self.master)
         self.add_window.title('Add Contact')
 
@@ -99,16 +125,46 @@ class ContactList(tk.Frame):
         self.email_entry = tk.Entry(self.add_window)
         self.email_entry.grid(row=2, column=1, padx=10, pady=10)
 
-        self.save_button = tk.Button(self.add_window, text='Save', command=self.save_contact)
+        self.save_button = tk.Button(self.add_window, text='Save', command=self.validate)
         self.save_button.grid(row=3, column=1, padx=10, pady=10)
-        
+
         self.exit_button = tk.Button(self.add_window,text = 'Go Back', command=self.go_back)
         self.exit_button.grid(row=3, column=0, padx=10,pady=10)
-        
+
     def go_back(self):
         confirm_back = messagebox.askyesnocancel("Confirm Clear", "Are you sure you want to go back? The profile you made will be deleted")
         if confirm_back:
-            self.add_window.destroy()          
+            self.add_window.destroy()
+
+    def validate(self):
+        # SAVE INFORMATION FROM ENTRY BOX
+        name = self.name_entry.get()
+        phone = self.phone_entry.get()
+        email = self.email_entry.get()
+
+        # check if input is valid
+        if not name.isalpha():
+            print("Names should be alphabetic")
+            return False
+
+        validnum = ""
+        for c in phone:
+            if c.isnumeric():
+                validnum += str(c)
+            else:
+                if c != ' ' and c != '-':
+                    print("Error not numbers")
+                    return False
+        if len(validnum) != 10:
+            print("Not the right length")
+            return False
+
+        pattern = r"\"?([-a-zA-Z0-9.`?{}]+@\w+\.\w+)\"?"
+        if not re.fullmatch(pattern, email):
+            print("Not a valid email")
+            return False
+
+        self.save_contact()
 
     def save_contact(self):
         # SAVE INFORMATION FROM ENTRY BOX
@@ -120,6 +176,8 @@ class ContactList(tk.Frame):
         self.contacts[name] = {'phone': phone, 'email': email}
         self.contacts_listbox.insert(tk.END, name)
         self.add_window.destroy() # REMOVE THE ADD WINDOW
+        self.users[self.nameResponse.get()] += self.contacts
+        print(self.users)
 
     def edit_contact(self):
         index = self.contacts_listbox.curselection() #TAKES WHATEVER THE USER SELECTS IN THE DISPLAYBOX
@@ -166,7 +224,7 @@ class ContactList(tk.Frame):
         # GETS THE SELECTED CONTACT
         index = self.contacts_listbox.curselection()
         if index:
-         
+
             name = self.contacts_listbox.get(index)
 
             # MAKES NEW WINDOW TO VIEW THE CONTACT INFORMATION  -- ONLY DISPLAY INFORMATION AS LABEL, SINCE WE WON'T NEED TO CHANGE IT
@@ -190,6 +248,8 @@ class ContactList(tk.Frame):
             del self.contacts[name]
             self.contacts_listbox.delete(tk.ACTIVE)
 
+
 root = tk.Tk()
 app = ContactList(root)
 root.mainloop()
+
