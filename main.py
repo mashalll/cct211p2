@@ -51,6 +51,10 @@ class ContactList(tk.Frame):
         c = self.db_conn.cursor()
         c.execute("INSERT INTO contacts (name, phone, email, user_id) VALUES (?, ?, ?, ?)", (name, phone, email, user_id))
         self.db_conn.commit()
+        
+    def edit_contact(id, name, email, phone):
+        c.execute("UPDATE contacts SET name = ?, email = ?, phone = ? WHERE id = ?",(name, email, phone, id))
+        conn.commit()
 
     def get_contacts_by_user_id(self, user_id):
         c = self.db_conn.cursor()
