@@ -52,9 +52,10 @@ class ContactList(tk.Frame):
         c.execute("INSERT INTO contacts (name, phone, email, user_id) VALUES (?, ?, ?, ?)", (name, phone, email, user_id))
         self.db_conn.commit()
         
-    def edit_contact(self, name, phone, email):
-        c.execute("UPDATE contacts SET name = ?, email = ?, phone = ? WHERE id = ?",(name, phone, email, user_id))
-        conn.commit()
+    def edit_contact2(self, name, phone, email, user_id):
+        c = self.db_conn.cursor()
+        c.execute("UPDATE contacts SET name = ?, phone = ?, email = ? WHERE id = ?",(name, phone, email, user_id))
+        self.db_conn.commit()
         
     # function to view all contacts
     def view_contacts2():
@@ -142,6 +143,7 @@ class ContactList(tk.Frame):
 
         #DICTIONARY FOR CONTACTS
         self.contacts = {}
+        self.id = 0 
 
     def close_application(self):
         confirm_close = messagebox.askyesnocancel("Confirm Close", "Are you sure you want to exit the application? You will be logged out")
@@ -222,10 +224,12 @@ class ContactList(tk.Frame):
         email = self.email_entry.get()
 
         # ADD INFORMATION TO DICTIONARY
-        self.contacts[name] = {'phone': phone, 'email': email}
+        self.contacts[name] = {'phone': phone, 'email': email, 'id': self.id}
         self.contacts_listbox.insert(tk.END, name)
         self.add_window.destroy() # REMOVE THE ADD WINDOW
         self.users[self.nameResponse.get()] += self.contacts
+        self.insert_contact(name, phone, email, self.id)
+        self.id += 1
         print(self.users)
 
     def edit_contact(self):
@@ -261,11 +265,13 @@ class ContactList(tk.Frame):
 
     def save_edited_contact(self, name):
         # THIS FUNCTION SAVES AND UPDATES THE CONTACTS NEW INFORMATION
+        id = self.contacts[name]['id']
         self.contacts[name]['phone'] = self.phone_entry.get()
         self.contacts[name]['email'] = self.email_entry.get()
 
         self.contacts_listbox.delete(tk.ACTIVE)
         self.contacts_listbox.insert(tk.ACTIVE, self.name_entry.get())
+        self.edit_contact2(self.name_entry.get(), self.phone_entry.get(), self.email_entry.get(), id)
 
         self.edit_window.destroy()
 
