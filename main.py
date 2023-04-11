@@ -58,16 +58,12 @@ class ContactList(tk.Frame):
         self.db_conn.commit()
         
     # function to view all contacts
-    def view_contacts2():
+    def view_contacts2(self):
+        c = self.db_conn.cursor()
         c.execute("SELECT * FROM contacts")
         contacts = c.fetchall()
         for contact in contacts:
             print(contact)
-
-    # function to delete a contact
-    def delete_contact2(id):
-        c.execute("DELETE FROM contacts WHERE id = ?", (id,))
-        conn.commit()
 
     def get_contacts_by_user_id(self, user_id):
         c = self.db_conn.cursor()
@@ -300,6 +296,7 @@ class ContactList(tk.Frame):
 
         if index:
             name = self.contacts_listbox.get(index)
+            self.delete_contact2(self.contacts[name]['id'] + 1)
             del self.contacts[name]
             self.contacts_listbox.delete(tk.ACTIVE)
 
