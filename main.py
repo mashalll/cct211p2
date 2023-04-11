@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog
-from PIL import ImageTk, Image
 from tkinter import * 
 import re
 import sqlite3
@@ -226,7 +225,6 @@ class ContactList(tk.Frame):
         self.users[self.nameResponse.get()] += self.contacts
         self.insert_contact(name, phone, email, self.id)
         self.id += 1
-        print(self.users)
 
     def edit_contact(self):
         index = self.contacts_listbox.curselection() #TAKES WHATEVER THE USER SELECTS IN THE DISPLAYBOX
