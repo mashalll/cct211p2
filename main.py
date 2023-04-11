@@ -63,6 +63,12 @@ class ContactList(tk.Frame):
         contacts = c.fetchall()
         for contact in contacts:
             print(contact)
+            
+    # function to delete a contact
+    def delete_contact2(self, id):
+        c = self.db_conn.cursor()
+        c.execute("DELETE FROM contacts WHERE id = ?", (id,))
+        self.db_conn.commit()
 
     def get_contacts_by_user_id(self, user_id):
         c = self.db_conn.cursor()
