@@ -265,7 +265,7 @@ class ContactList(tk.Frame):
 
     def save_edited_contact(self, name):
         # THIS FUNCTION SAVES AND UPDATES THE CONTACTS NEW INFORMATION
-        id = self.contacts[name]['id']
+        id = self.contacts[name]['id'] + 1
         self.contacts[name]['phone'] = self.phone_entry.get()
         self.contacts[name]['email'] = self.email_entry.get()
 
